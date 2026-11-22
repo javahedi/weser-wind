@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weser Wind Park – Live Demo · DoppleJa</title>
+<style>
+  :root{
+    --bg:#050e1c; --bg2:#081628; --panel:#0b1c33; --panel2:#0e2340; --line:rgba(255,255,255,.08);
+    --sea:#1d6fe0; --sea2:#3ec6ff; --red:#e30613; --red2:#ff3b47; --ok:#2ee59d; --warn:#ffb020;
+    --text:#eef3fa; --muted:#8ea2bf;
+    --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.5}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1280px;margin:0 auto;padding:0 18px}
+  nav{position:sticky;top:0;z-index:20;background:rgba(5,14,28,.8);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  nav .wrap{display:flex;justify-content:space-between;align-items:center;height:56px}
+  .logo{font-weight:800}.logo b{color:var(--red)}
+  .back{font-size:.85rem;color:var(--muted)} .back:hover{color:#fff}
+  .badge{font-family:var(--mono);font-size:.7rem;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,176,32,.4);color:var(--warn);background:rgba(255,176,32,.08)}
+
+  header{padding:34px 0 18px}
+  .eyebrow{font-family:var(--mono);font-size:.75rem;color:var(--red2);letter-spacing:.14em;text-transform:uppercase}
+  h1{font-size:clamp(1.7rem,3.6vw,2.6rem);letter-spacing:-.03em;line-height:1.1;margin:8px 0 8px}
+  .lead{color:var(--muted);max-width:760px}
+  .tabs{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap}
+  .tab{font-family:var(--mono);font-size:.8rem;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel);cursor:pointer;color:var(--muted);display:flex;gap:8px;align-items:center}
+  .tab.on{border-color:var(--sea2);color:#fff}
+  .tab i{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block}
+  .tab i.w{background:var(--warn)} .tab i.e{background:var(--red2)} .tab i.s{background:var(--muted)}
+
+  /* PIPELINE */
+  .pipe{margin:18px 0;border:1px solid var(--line);border-radius:16px;background:var(--bg2);padding:16px;overflow-x:auto}
+  .pipe-title{font-family:var(--mono);font-size:.72rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px;display:flex;justify-content:space-between}
+  .flow{display:flex;align-items:center;min-width:900px}
+  .node{flex:0 0 auto;width:118px;border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:10px;text-align:center}
+  .node b{display:block;font-size:.85rem}
+  .node small{display:block;font-family:var(--mono);font-size:.66rem;color:var(--muted)}
+  .node .c{font-family:var(--mono);font-size:.8rem;color:var(--sea2);margin-top:4px}
+  .node.hl{border-color:rgba(62,198,255,.5)}
+  .link{flex:1;height:2px;background:linear-gradient(90deg,rgba(62,198,255,.15),rgba(62,198,255,.45));position:relative;margin:0 4px;min-width:30px}
+  .link::after{content:"";position:absolute;top:-3px;left:0;width:8px;height:8px;border-radius:50%;background:var(--sea2);box-shadow:0 0 8px var(--sea2);animation:flow 1.6s linear infinite}
+  .link.bad::after{background:var(--red2);box-shadow:0 0 8px var(--red2)}
+  @keyframes flow{to{left:calc(100% - 8px)}}
+
+  /* GRID */
+  .grid{display:grid;grid-template-columns:320px 1fr;gap:16px}
+  @media(max-width:980px){.grid{grid-template-columns:1fr}}
+  .card{border:1px solid var(--line);border-radius:16px;background:var(--panel);padding:16px;position:relative}
+  .card h3{font-size:.78rem;font-family:var(--mono);color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+  .card h3 span{color:var(--sea2)}
+  .turb{display:flex;flex-direction:column;align-items:center}
+  .turb svg{width:100%;max-width:260px;height:auto}
+  @media(max-width:980px){.turb svg{max-width:170px}}
+  .status{font-family:var(--mono);font-size:.78rem;padding:5px 12px;border-radius:999px;margin-top:6px}
+  .st-ok{color:var(--ok);background:rgba(46,229,157,.1);border:1px solid rgba(46,229,157,.3)}
+  .st-warn{color:var(--warn);background:rgba(255,176,32,.1);border:1px solid rgba(255,176,32,.3)}
+  .st-err{color:var(--red2);background:rgba(255,59,71,.1);border:1px solid rgba(255,59,71,.35)}
+  .st-stop{color:var(--muted);background:rgba(255,255,255,.05);border:1px solid var(--line)}
+
+  .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:16px}
+  @media(max-width:1100px){.kpis{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:520px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpi{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:12px 14px}
+  .kpi small{display:block;font-family:var(--mono);font-size:.64rem;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+  .kpi b{font-size:1.45rem;letter-spacing:-.02em}
+  .kpi i{font-style:normal;font-size:.75rem;color:var(--muted);margin-left:4px}
+  .kpi.alert b{color:var(--red2)}
+
+  .charts{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+  @media(max-width:760px){.charts{grid-template-columns:1fr}}
+  canvas.ch{width:100%;height:220px;display:block}
+  .legend{display:flex;gap:14px;font-family:var(--mono);font-size:.68rem;color:var(--muted);margin-top:6px;flex-wrap:wrap}
+  .legend i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+
+  /* CONTROLS */
+  .ctrl{display:flex;flex-direction:column;gap:12px}
+  .ctrl label{font-family:var(--mono);font-size:.72rem;color:var(--muted);display:flex;justify-content:space-between}
+  input[type=range]{width:100%;accent-color:var(--sea2)}
+  .btns{display:flex;flex-wrap:wrap;gap:8px}
+  .b{font-family:var(--mono);font-size:.74rem;padding:8px 11px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--text);cursor:pointer;transition:.2s}
+  .b:hover{border-color:var(--sea2)}
+  .b.on{background:var(--sea);border-color:var(--sea)}
+  .b.red{border-color:rgba(255,59,71,.45)} .b.red.on{background:var(--red);border-color:var(--red)}
+  .seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .seg button{flex:1;background:none;border:0;color:var(--muted);font-family:var(--mono);font-size:.74rem;padding:8px;cursor:pointer}
+  .seg button.on{background:#fff;color:var(--bg);font-weight:700}
+
+  .log{font-family:var(--mono);font-size:.72rem;max-height:170px;overflow:auto;display:flex;flex-direction:column;gap:6px}
+  .log div{padding:6px 8px;border-radius:8px;background:rgba(255,255,255,.03);border-left:3px solid var(--sea2)}
+  .log .w{border-color:var(--warn)} .log .e{border-color:var(--red2)} .log .o{border-color:var(--ok)}
+  .log em{color:var(--muted);font-style:normal;margin-right:6px}
+
+  /* ARCH */
+  section.arch{padding:50px 0 70px}
+  h2{font-size:clamp(1.4rem,3vw,2rem);letter-spacing:-.02em;margin:8px 0 10px}
+  .stack{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:20px}
+  .sk{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--panel)}
+  .sk .n{font-family:var(--mono);font-size:.7rem;color:var(--red2)}
+  .sk b{display:block;margin:6px 0 4px}
+  .sk p{font-size:.85rem;color:var(--muted)}
+  .sk code{font-family:var(--mono);font-size:.72rem;color:var(--sea2)}
+  footer{border-top:1px solid var(--line);padding:24px 0;color:var(--muted);font-size:.8rem}
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+  <a href="https://doppleja.de" class="back">← <span class="logo">Dopple<b>Ja</b></span></a>
+  <span class="badge">● LIVE DEMO · SIMULATED DATA</span>
+</div></nav>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Data Engineering · Case Demo</div>
+  <h1>Weser Wind Park: from raw sensor data to decisions</h1>
+  <p class="lead">A fictional offshore park with three turbines near Bremerhaven. Sensor data streams through a real-time pipeline: validated, cleaned, aggregated and analysed for faults. Play with the wind and inject faults to see how the system reacts.</p>
+  <div class="tabs" id="tabs"></div>
+</header>
+
+<div class="pipe">
+  <div class="pipe-title"><span>Data pipeline · live</span><span id="pipeRate">0 msg/s</span></div>
+  <div class="flow">
+    <div class="node"><b>Sensors</b><small>SCADA · 1 Hz</small><div class="c" id="pc0">0</div></div><div class="link"></div>
+    <div class="node"><b>MQTT</b><small>Mosquitto</small><div class="c" id="pc1">0</div></div><div class="link"></div>
+    <div class="node hl"><b>Validate</b><small>range · gaps</small><div class="c" id="pc2">0 flagged</div></div><div class="link" id="lk2"></div>
+    <div class="node hl"><b>Clean</b><small>Hampel filter</small><div class="c" id="pc3">0 fixed</div></div><div class="link"></div>
+    <div class="node"><b>Aggregate</b><small>10-min means</small><div class="c" id="pc4">0</div></div><div class="link"></div>
+    <div class="node"><b>TimescaleDB</b><small>hypertable</small><div class="c" id="pc5">0 rows</div></div><div class="link"></div>
+    <div class="node hl"><b>Detect</b><small>anomaly model</small><div class="c" id="pc6">0 alerts</div></div><div class="link"></div>
+    <div class="node"><b>Dashboard</b><small>WebSocket</small><div class="c" id="pc7">live</div></div>
+  </div>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><small>Wind speed</small><b id="kWind">0</b><i>m/s</i></div>
+  <div class="kpi"><small>Power</small><b id="kPow">0</b><i>MW</i></div>
+  <div class="kpi"><small>Rotor</small><b id="kRpm">0</b><i>rpm</i></div>
+  <div class="kpi" id="kGbBox"><small>Gearbox temp</small><b id="kGb">0</b><i>°C</i></div>
+  <div class="kpi"><small>Park energy today</small><b id="kE">0</b><i>MWh</i></div>
+  <div class="kpi"><small>Availability</small><b id="kAv">100</b><i>%</i></div>
+</div>
+
+<div class="grid">
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="card turb">
+      <h3 style="width:100%">Turbine <span id="tName">WT-01</span></h3>
+      <svg viewBox="0 0 200 260" id="tsvg">
+        <defs><linearGradient id="tw" x1="0" x2="1"><stop offset="0" stop-color="#cfdcec"/><stop offset="1" stop-color="#8fa3bd"/></linearGradient></defs>
+        <path d="M0 238 Q 25 230 50 238 T 100 238 T 150 238 T 200 238 V260 H0Z" fill="#14407f" opacity=".8" id="wv1"/>
+        <polygon points="96,250 104,250 102,78 98,78" fill="url(#tw)"/>
+        <rect x="92" y="66" width="34" height="14" rx="5" fill="#dfe8f3"/>
+        <g id="rotor" transform="translate(96 73)">
+          <path d="M0 0 L-4 -6 L-2 -66 L2 -66 L4 -6Z" fill="#eef3fa"/>
+          <path d="M0 0 L-4 -6 L-2 -66 L2 -66 L4 -6Z" fill="#eef3fa" transform="rotate(120)"/>
+          <path d="M0 0 L-4 -6 L-2 -66 L2 -66 L4 -6Z" fill="#eef3fa" transform="rotate(240)"/>
+          <circle r="6" fill="#e30613"/>
+        </g>
+        <g id="ice" opacity="0"><circle cx="70" cy="40" r="2" fill="#bfe3ff"/><circle cx="130" cy="95" r="2" fill="#bfe3ff"/><circle cx="60" cy="110" r="2" fill="#bfe3ff"/></g>
+        <circle id="heat" cx="118" cy="73" r="10" fill="#ff3b47" opacity="0"/>
+      </svg>
+      <div class="status st-ok" id="tStatus">● Producing</div>
+    </div>
+    <div class="card">
+      <h3>Controls</h3>
+      <div class="ctrl">
+        <div class="seg" id="mode"><button class="on" data-m="auto">Auto wind</button><button data-m="man">Manual</button></div>
+        <div><label>Mean wind <span id="wLbl">9.0 m/s</span></label><input type="range" id="wind" min="0" max="30" step=".5" value="9"></div>
+        <div class="btns">
+          <button class="b red" id="storm">🌪 Storm</button>
+          <button class="b" data-f="gearbox">🔥 Gearbox overheat</button>
+          <button class="b" data-f="icing">❄️ Blade icing</button>
+          <button class="b" data-f="dropout">📡 Sensor dropout</button>
+        </div>
+        <div class="seg" id="view"><button data-v="raw">Raw data</button><button class="on" data-v="clean">Cleaned</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div class="charts">
+      <div class="card"><h3>Wind &amp; power · last 3 min <span id="viewLbl">cleaned</span></h3>
+        <canvas class="ch" id="c1"></canvas>
+        <div class="legend"><span><i style="background:#3ec6ff"></i>Wind m/s</span><span><i style="background:#fff"></i>Power MW</span><span><i style="background:#ff3b47"></i>Flagged</span></div>
+      </div>
+      <div class="card"><h3>Power curve <span>IEC 61400-12</span></h3>
+        <canvas class="ch" id="c2"></canvas>
+        <div class="legend"><span><i style="background:#ffb020"></i>Theoretical</span><span><i style="background:#3ec6ff"></i>Measured</span><span><i style="background:#ff3b47"></i>Anomaly</span></div>
+      </div>
+    </div>
+    <div class="charts">
+      <div class="card"><h3>Gearbox temp &amp; vibration</h3>
+        <canvas class="ch" id="c3" style="height:160px"></canvas>
+        <div class="legend"><span><i style="background:#ffb020"></i>Temp °C</span><span><i style="background:#2ee59d"></i>Vibration mm/s</span><span><i style="background:#ff3b47"></i>Limit</span></div>
+      </div>
+      <div class="card"><h3>Alerts &amp; events</h3><div class="log" id="log"></div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<section class="arch"><div class="wrap">
+  <div class="eyebrow">Under the hood</div>
+  <h2>A production-style stack, fully containerised</h2>
+  <p class="lead">This demo runs on a real pipeline: the same architecture a wind operator would use, scaled down to one server.</p>
+  <div class="stack">
+    <div class="sk"><div class="n">01 · INGEST</div><b>Sensor simulator</b><p>Physics-based wind (Weibull + turbulence) and power curve. <code>Rust / Python</code></p></div>
+    <div class="sk"><div class="n">02 · TRANSPORT</div><b>MQTT broker</b><p>Industry-standard IoT messaging. <code>Mosquitto</code></p></div>
+    <div class="sk"><div class="n">03 · PROCESS</div><b>Clean &amp; aggregate</b><p>Validation, outlier removal, 10-min means. <code>Python · FastAPI</code></p></div>
+    <div class="sk"><div class="n">04 · STORE</div><b>Time-series DB</b><p>Hypertables and continuous aggregates. <code>TimescaleDB</code></p></div>
+    <div class="sk"><div class="n">05 · ANALYSE</div><b>Anomaly detection</b><p>Power-curve residuals and thermal limits. <code>NumPy · scikit-learn</code></p></div>
+    <div class="sk"><div class="n">06 · SERVE</div><b>Live dashboard</b><p>WebSocket stream, deployed with CI/CD. <code>Docker · Caddy · Hetzner</code></p></div>
+  </div>
+</div></section>
+<footer><div class="wrap">Demo by DoppleJa · Bremen. All data is simulated; Weser Wind Park is fictional.</div></footer>
+
+<script>
+/* ================= SIMULATION (later replaced by WebSocket feed) ================= */
+const RATED=4.2, D=136, A=Math.PI*(D/2)**2, RHO=1.225, CP=.45, CUTIN=3, CUTOUT=25, RESTART=20, RATED_RPM=11.5;
+const theo=v=>(v<CUTIN||v>=CUTOUT)?0:Math.min(RATED,.5*RHO*A*CP*v**3/1e6);
+const N=180, turbines=["WT-01","WT-02","WT-03"].map((n,i)=>({name:n,wake:[1,.93,.88][i],v:9,P:0,rpm:0,gb:55,vib:1.2,stopped:false,
+  fault:null,faultT:0,hist:[],pc:[],e:0,up:0,tot:0,ang:Math.random()*360,state:"ok"}));
+let sel=0, mode="auto", meanW=9, storm=false, view="clean", simT=0;
+const counters={raw:0,flag:0,fixed:0,agg:0,rows:0,alerts:0};
+const randn=()=>{let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)};
+
+function step(){
+  simT++;
+  if(mode==="auto"&&!storm){meanW+= (9.5-meanW)*.01 + randn()*.15; meanW=Math.max(2,Math.min(17,meanW)); wind.value=meanW.toFixed(1); wLbl.textContent=meanW.toFixed(1)+" m/s"}
+  const target=storm?28:meanW;
+  turbines.forEach((t,i)=>{
+    // OU process for wind with turbulence
+    t.v += ((target*t.wake)-t.v)*.08 + randn()*(.10+target*.012);
+    t.v=Math.max(0,t.v);
+    // cut-out with hysteresis
+    if(t.v>=CUTOUT && !t.stopped){t.stopped=true; if(i===sel||true) log(`${t.name}: cut-out at ${t.v.toFixed(1)} m/s, rotor parked`,"w")}
+    if(t.stopped && t.v<RESTART){t.stopped=false; log(`${t.name}: wind below ${RESTART} m/s, restarting`,"o")}
+    let P=t.stopped?0:theo(t.v)*(1+randn()*.02);
+    if(t.fault==="icing") P*=.58;
+    if(t.fault==="gearbox" && t.gb>85){P=Math.min(P,RATED*.5)}
+    t.P=Math.max(0,P);
+    const rpmT=t.stopped||t.v<CUTIN?0:Math.min(RATED_RPM,1.1*t.v);
+    t.rpm+=(rpmT-t.rpm)*.15;
+    // thermal
+    const gbT=48+22*t.P/RATED+(t.fault==="gearbox"?Math.min(45,t.faultT*.6):0);
+    t.gb+=(gbT-t.gb)*.05+randn()*.15;
+    t.vib=Math.max(.2,.6+1.6*t.rpm/RATED_RPM+randn()*.15+(t.fault==="icing"?1.8+randn()*.4:0)+(t.fault==="gearbox"&&t.faultT>40?1.2:0));
+    if(t.fault)t.faultT++;
+    // raw sensor (with noise, spikes, dropout)
+    let raw=t.v+randn()*.25, flagged=false;
+    if(Math.random()<.02){raw+= (Math.random()<.5?-1:1)*(6+Math.random()*8);}
+    if(t.fault==="dropout"){raw=(simT%20<12)?NaN:t.v}
+    counters.raw++;
+    let clean=raw;
+    const last=t.hist.length?t.hist[t.hist.length-1].cw:t.v;
+    if(isNaN(raw)||raw<0||raw>45||Math.abs(raw-last)>4){flagged=true;counters.flag++;clean=last*.7+t.v*.3;counters.fixed++}
+    t.hist.push({rw:raw,cw:clean,P:t.P,flag:flagged,gb:t.gb,vib:t.vib});
+    if(t.hist.length>N)t.hist.shift();
+    // power-curve residual
+    const exp=theo(clean), res=exp>.3?(t.P-exp)/exp:0, anom=res<-.25 && !t.stopped;
+    t.pc.push({v:clean,P:t.P,a:anom}); if(t.pc.length>500)t.pc.shift();
+    t.anomRun=anom?(t.anomRun||0)+1:0;
+    if(t.anomRun===12){log(`${t.name}: power ${Math.round(-res*100)}% below curve → possible blade icing`,"e");counters.alerts++}
+    if(t.fault==="gearbox"&&t.gb>80&&!t.gbAl){t.gbAl=1;log(`${t.name}: gearbox ${t.gb.toFixed(0)}°C > 80°C limit → power derated`,"e");counters.alerts++}
+    if(t.fault==="dropout"&&t.faultT===8){log(`${t.name}: anemometer data gaps detected → interpolating`,"w");counters.alerts++}
+    // state
+    t.state=t.stopped?"stop":(t.gb>80||t.anomRun>=12)?"err":t.fault?"warn":"ok";
+    // energy (time compression: 1 tick = 1 min of production)
+    t.e+=t.P/60; t.tot++; if(t.P>0||t.v<CUTIN)t.up++;
+  });
+  if(simT%10===0){counters.agg++;counters.rows+=3}
+}
+
+/* ================= UI ================= */
+const $=id=>document.getElementById(id);
+const tabs=$("tabs");
+function renderTabs(){tabs.innerHTML="";turbines.forEach((t,i)=>{const b=document.createElement("button");b.className="tab"+(i===sel?" on":"");
+  b.innerHTML=`<i class="${{ok:"",warn:"w",err:"e",stop:"s"}[t.state]}"></i>${t.name} · ${t.P.toFixed(1)} MW`;b.onclick=()=>{sel=i;renderTabs();syncFaultBtns()};tabs.appendChild(b)})}
+function log(msg,c){const d=document.createElement("div");d.className=c||"";const m=String(Math.floor(simT/60)).padStart(2,"0")+":"+String(simT%60).padStart(2,"0");d.innerHTML=`<em>${m}</em>${msg}`;$("log").prepend(d);while($("log").children.length>30)$("log").lastChild.remove()}
+
+document.querySelectorAll("#mode button").forEach(b=>b.onclick=()=>{mode=b.dataset.m;document.querySelectorAll("#mode button").forEach(x=>x.classList.toggle("on",x===b))});
+wind.oninput=()=>{mode="man";document.querySelectorAll("#mode button").forEach(x=>x.classList.toggle("on",x.dataset.m==="man"));meanW=+wind.value;wLbl.textContent=meanW.toFixed(1)+" m/s"};
+$("storm").onclick=()=>{storm=!storm;$("storm").classList.toggle("on",storm);log(storm?"Storm front approaching: gusts above 25 m/s":"Storm passed",storm?"w":"o")};
+document.querySelectorAll("[data-f]").forEach(b=>b.onclick=()=>{const t=turbines[sel],f=b.dataset.f;
+  if(t.fault===f){t.fault=null;t.faultT=0;t.gbAl=0;log(`${t.name}: ${f} cleared by technician`,"o")}else{t.fault=f;t.faultT=0;t.gbAl=0;log(`${t.name}: fault injected (${f})`,"w")}syncFaultBtns()});
+function syncFaultBtns(){document.querySelectorAll("[data-f]").forEach(b=>b.classList.toggle("on",turbines[sel].fault===b.dataset.f));$("tName").textContent=turbines[sel].name}
+document.querySelectorAll("#view button").forEach(b=>b.onclick=()=>{view=b.dataset.v;$("viewLbl").textContent=view==="raw"?"raw":"cleaned";document.querySelectorAll("#view button").forEach(x=>x.classList.toggle("on",x===b))});
+
+/* ---- canvas helpers ---- */
+function prep(c){const D=Math.min(devicePixelRatio||1,2),w=c.clientWidth,h=c.clientHeight;if(c.width!==w*D){c.width=w*D;c.height=h*D}const g=c.getContext("2d");g.setTransform(D,0,0,D,0,0);g.clearRect(0,0,w,h);return[g,w,h]}
+function axes(g,w,h,L,B,yMax,ticks,unit,right){g.strokeStyle="rgba(255,255,255,.07)";g.fillStyle="#8ea2bf";g.font="10px ui-monospace,monospace";
+  for(let i=0;i<=ticks;i++){const y=h-B-(h-B-10)*i/ticks;g.beginPath();g.moveTo(L,y);g.lineTo(w-(right?30:6),y);g.stroke();g.fillText((yMax*i/ticks).toFixed(0)+unit,2,y+3)}}
+function line(g,pts,col,wd){g.beginPath();let s=false;pts.forEach(p=>{if(p==null||isNaN(p[1])){s=false;return}s?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]);s=true});g.strokeStyle=col;g.lineWidth=wd||1.5;g.stroke()}
+
+function drawCharts(){
+  const t=turbines[sel];
+  // c1 wind & power
+  let [g,w,h]=prep($("c1"));const L=34,B=16,R=30,X=i=>L+(w-L-R)*i/(N-1);
+  axes(g,w,h,L,B,30,3," ",true);
+  g.fillStyle="#8ea2bf";[0,2,4].forEach(k=>g.fillText(k.toFixed(0)+"MW",w-28,h-B-(h-B-10)*k/4.2+3));
+  const Yw=v=>h-B-(h-B-10)*Math.min(v,30)/30, Yp=p=>h-B-(h-B-10)*p/4.2;
+  line(g,t.hist.map((d,i)=>[X(i),Yp(d.P)]),"rgba(255,255,255,.9)",1.6);
+  line(g,t.hist.map((d,i)=>[X(i),Yw(view==="raw"?d.rw:d.cw)]),"#3ec6ff",1.6);
+  t.hist.forEach((d,i)=>{if(d.flag){g.fillStyle="#ff3b47";const y=view==="raw"?(isNaN(d.rw)?h-B-2:Yw(d.rw)):Yw(d.cw);g.beginPath();g.arc(X(i),y,2.6,0,7);g.fill()}});
+  // c2 power curve
+  [g,w,h]=prep($("c2"));const L2=30,B2=18,Xv=v=>L2+(w-L2-8)*v/30,Yp2=p=>h-B2-(h-B2-10)*p/4.6;
+  axes(g,w,h,L2,B2,4,4,"");g.fillStyle="#8ea2bf";[0,10,20,30].forEach(v=>g.fillText(v+"m/s",Xv(v)-(v===30?34:v?14:0),h-4));
+  g.fillStyle="rgba(62,198,255,.55)";t.pc.forEach(p=>{g.fillStyle=p.a?"#ff3b47":"rgba(62,198,255,.5)";g.fillRect(Xv(p.v)-1.2,Yp2(p.P)-1.2,2.4,2.4)});
+  const th=[];for(let v=0;v<=30;v+=.25)th.push([Xv(v),Yp2(theo(v))]);line(g,th,"#ffb020",2);
+  // c3 temp & vib
+  [g,w,h]=prep($("c3"));const L3=34,B3=10,X3=i=>L3+(w-L3-34)*i/(N-1),Yt=v=>h-B3-(h-B3-10)*v/100,Yv=v=>h-B3-(h-B3-10)*v/10;
+  axes(g,w,h,L3,B3,100,4,"°",true);g.fillStyle="#2ee59d";[0,5,10].forEach(k=>g.fillText(k+"mm/s",w-32,h-B3-(h-B3-10)*k/10+3));
+  g.setLineDash([4,4]);line(g,[[L3,Yt(80)],[w-34,Yt(80)]],"rgba(255,59,71,.8)",1);g.setLineDash([]);
+  line(g,t.hist.map((d,i)=>[X3(i),Yt(d.gb)]),"#ffb020",1.6);
+  line(g,t.hist.map((d,i)=>[X3(i),Yv(d.vib)]),"#2ee59d",1.3);
+}
+
+function drawUI(){
+  const t=turbines[sel];
+  $("kWind").textContent=t.v.toFixed(1);$("kPow").textContent=t.P.toFixed(2);$("kRpm").textContent=t.rpm.toFixed(1);
+  $("kGb").textContent=t.gb.toFixed(0);$("kGbBox").classList.toggle("alert",t.gb>80);
+  $("kE").textContent=turbines.reduce((s,x)=>s+x.e,0).toFixed(1);
+  $("kAv").textContent=(100*turbines.reduce((s,x)=>s+x.up,0)/Math.max(1,turbines.reduce((s,x)=>s+x.tot,0))).toFixed(1);
+  const st=$("tStatus"),map={ok:["st-ok","● Producing"],warn:["st-warn","● Running · fault active"],err:["st-err","● Alarm"],stop:["st-stop","● Parked (cut-out)"]}[t.state];
+  st.className="status "+map[0];st.textContent=map[1];
+  $("ice").setAttribute("opacity",t.fault==="icing"?1:0);
+  $("heat").setAttribute("opacity",t.gb>70?Math.min(.8,(t.gb-70)/20):0);
+  $("pc0").textContent=counters.raw.toLocaleString("de-DE");$("pc1").textContent=counters.raw.toLocaleString("de-DE");
+  $("pc2").textContent=counters.flag+" flagged";$("pc3").textContent=counters.fixed+" fixed";$("pc4").textContent=counters.agg+" windows";
+  $("pc5").textContent=counters.rows+" rows";$("pc6").textContent=counters.alerts+" alerts";$("pipeRate").textContent=(turbines.length*6)+" msg/s";
+  $("lk2").classList.toggle("bad",turbines.some(x=>x.hist.length&&x.hist[x.hist.length-1].flag));
+  renderTabs();drawCharts();
+}
+
+// rotor animation
+let lastF=performance.now();
+function anim(now){const dt=(now-lastF)/1000;lastF=now;const t=turbines[sel];t.ang=(t.ang+t.rpm*6*dt*3)%360;$("rotor").setAttribute("transform",`translate(96 73) rotate(${t.ang})`);requestAnimationFrame(anim)}
+requestAnimationFrame(anim);
+
+// warm-up history, then live
+for(let i=0;i<N;i++)step();
+log("Pipeline connected · 3 turbines online","o");
+drawUI();syncFaultBtns();
+setInterval(()=>{step();drawUI()},1000/6);
+addEventListener("resize",drawCharts);
+</script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+# M0 base services. Start with:  docker compose -f infra/docker-compose.yml --env-file .env up -d
+services:
+  mqtt:
+    image: eclipse-mosquitto:2
+    ports: ["1883:1883"]
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mqtt-data:/mosquitto/data
+    restart: unless-stopped
+
+  db:
+    image: timescale/timescaledb:latest-pg16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports: ["5432:5432"]
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  # Coming in later modules:
+  # simulator (M1, Rust) · ingest (M2, Python) · api (M3) · dashboard (M3)
+
+volumes:
+  mqtt-data:
+  db-data:
