@@ -27,7 +27,7 @@ open dashboard/index.html
 
 ## Roadmap
 - [x] Dashboard prototype
-- [ ] **M0** Foundation: repo, Docker Compose, CI, deploy to Hetzner
+- [x] **M0** Foundation: repo, Docker Compose, CI, deploy to Hetzner
 - [ ] **M1** Rust simulator → MQTT
 - [ ] **M2** Ingest & clean → TimescaleDB
 - [ ] **M3** Live dashboard via WebSocket
